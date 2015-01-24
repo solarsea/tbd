@@ -10,7 +10,6 @@ import (
 
 /*
  tbd            - prints all current tasks
- tbd tags       - prints all current tags
  tbd #tagname   - prints all current tasks with #tagname
 */
 
@@ -31,7 +30,7 @@ func main() {
 
 	var (
 		exitCode int
-		handlers []handler = []handler{counting()}
+		handlers []handler = []handler{counting(), tracing()}
 	)
 
 	// Exit handler
@@ -104,14 +103,17 @@ type task struct {
 // Alias for a slice of task pointer
 type tasks []*task
 
+// as per sort.Interface
 func (t tasks) Len() int {
 	return len(t)
 }
 
+// as per sort.Interface
 func (t tasks) Less(i, j int) bool {
 	return t[i].nth < t[j].nth
 }
 
+// as per sort.Interface
 func (t tasks) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
@@ -135,7 +137,7 @@ func handle(handlers []handler, t *task) {
 	}
 }
 
-// Returns a counting handler closure that sets the task's nth field
+// Returns a counting handler closure that sets the tasks' nth field
 func counting() handler {
 	var at int = 0
 	return func(t *task) action {
@@ -145,29 +147,22 @@ func counting() handler {
 	}
 }
 
-// Returns a grouping handler closure that stores tasks in tag chains
-func grouping() handler {
-	// Store dependency chains per tag type
-	var chains = make(map[string]tasks)
-
+// Returns a tracing handler closure that sets the tasks' depends field
+func tracing() handler {
+	// Store the last task per tag type
+	var last = make(map[string]*task)
 	return func(t *task) action {
 		for _, tag := range t.hash {
-			// The previous tasks for current tag
-			prev := chains[tag]
-
-			// Point the current task to the last one with a matching tag, if any
-			if l := len(prev); l > 0 {
-				t.depends = append(t.depends, prev[l-1])
+			if prev, ok := last[tag]; ok {
+				t.depends = append(t.depends, prev)
 			}
-
-			// Add the current task for the current tag
-			chains[tag] = append(chains[tag], t)
+			last[tag] = t
 		}
 		return action{} // default, no action
 	}
 }
 
-// Returns a matching handler closure that stores tasks in tag chains
+// Returns a matching handler closure that filters tasks per tag
 func matching(tag string) handler {
 	return func(t *task) action {
 		for _, v := range t.hash {
@@ -177,4 +172,13 @@ func matching(tag string) handler {
 		}
 		return action{stop: true}
 	}
+}
+
+// Returns a handler that stores every seen task in the map
+func collecting() (handler, map[*task]struct{}) {
+	var seen = make(map[*task]struct{})
+	return func(t *task) action {
+		seen[t] = struct{}{}
+		return action{}
+	}, seen
 }
