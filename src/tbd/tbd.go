@@ -9,9 +9,9 @@ import (
 )
 
 /*
- tbd            - print all current tasks
- tbd tags       - print all current tags
- tbd #tagname   - print all current tasks with #tagname
+ tbd            - prints all current tasks
+ tbd tags       - prints all current tags
+ tbd #tagname   - prints all current tasks with #tagname
 */
 
 var (
@@ -31,6 +31,7 @@ func main() {
 
 	var (
 		exitCode int
+		handlers []handler = make([]handler, 1)
 	)
 
 	// Exit handler
@@ -59,10 +60,10 @@ func main() {
 
 	reader := bufio.NewReader(input)
 	for {
-		_, err := reader.ReadString('\n')
+		line, err := reader.ReadString('\n')
+		handle(handlers, task{parse(line), line})
 
-		// Handle each line
-
+		// Process errors after handling as ReadString can return both data and error f
 		if err != nil {
 			if err == io.EOF {
 				return
@@ -79,12 +80,6 @@ type tags struct {
 	at   []string
 }
 
-// The task struct contains a task description and its tags
-type task struct {
-	tags
-	value string
-}
-
 // Parse the input for any tags
 func parse(line string) tags {
 	var result tags
@@ -99,4 +94,29 @@ func parse(line string) tags {
 	}
 
 	return result
+}
+
+// The task struct contains a task description and its tags
+type task struct {
+	tags
+	value string
+}
+
+// The action struct contains flags that determine what to do with a task
+type action struct {
+	// Stop further processing of the task
+	stop bool
+}
+
+// An alias interface for all task handler functions
+type handler func(task) action
+
+// Execute handlers against a task
+func handle(handlers []handler, t task) {
+	for _, h := range handlers {
+		act := h(t)
+		if act.stop {
+			return
+		}
+	}
 }
