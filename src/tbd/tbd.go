@@ -1,4 +1,4 @@
-// tbd, a #tag-based dependencies filter useful for low ceremony task management
+// tbd, a #tag-based dependency tool for low ceremony task tracking
 // see README.md for usage tips
 package main
 
@@ -39,12 +39,7 @@ func main() {
 	// Create the final handler and stage the output
 	collect, output := collecting()
 	defer func() {
-		seq := make(tasks, 0, len(output))
-		for k, _ := range output {
-			seq = append(seq, k)
-		}
-		sort.Stable(seq)
-		for _, v := range seq {
+		for _, v := range output() {
 			fmt.Println(v)
 		}
 	}()
@@ -80,6 +75,11 @@ func main() {
 		}
 	}()
 
+	exitCode = process(input, handlers)
+}
+
+// Process the input through the provided handlers
+func process(input io.Reader, handlers []handler) int {
 	reader := bufio.NewReader(input)
 	for {
 		line, err := reader.ReadString('\n')
@@ -92,10 +92,10 @@ func main() {
 		// Process errors after handling as ReadString can return both data and error f
 		if err != nil {
 			if err == io.EOF {
-				return
+				return 0
 			}
 			fmt.Fprintln(os.Stderr, "Error reading input.", err.Error())
-			exitCode = 1
+			return 1
 		}
 	}
 }
@@ -235,11 +235,18 @@ func matching(tags []string) handler {
 	}
 }
 
-// Returns a handler that stores every seen task in the map
-func collecting() (handler, map[*task]struct{}) {
+// Returns a handler that stores every seen task and an ancillary function to retrieve those
+func collecting() (handler, func() tasks) {
 	var seen = make(map[*task]struct{})
 	return func(t *task) action {
-		seen[t] = struct{}{}
-		return action{}
-	}, seen
+			seen[t] = struct{}{}
+			return action{}
+		}, func() tasks {
+			seq := make(tasks, 0, len(seen))
+			for k, _ := range seen {
+				seq = append(seq, k)
+			}
+			sort.Stable(seq)
+			return seq
+		}
 }
