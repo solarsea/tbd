@@ -20,7 +20,7 @@ A common acronym for
 An application name
 
 - stands for #tag-based dependency
-- not a common command on most system
+- not a common command on most systems
 
 * Task tracking
 
@@ -43,8 +43,8 @@ tbd uses
 
 - Coined by D. Richard Hipp of SQLite and Fossil fame
 - A way to do tools for power users with better user experience
-- Similar to less is more :)
 - * I dont want to learn a new language just to use task warrior *
+
 
 tbd tries to follow suit by
 
