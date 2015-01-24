@@ -1,12 +1,5 @@
 // tbd, a #tag-based dependencies filter useful for low ceremony task management
-//
-// * Keep your tasks in a text file named 'tbdata', one task per line
-// * Tag your tasks with #some #tags to indicate dependencies
-//
-// * Invoke tbd without any arguments to list all non-blocked tasks
-// * Invoke tbd with #tagged #arguments to list all matching tasks
-//
-// Live, learn and take it easy :)
+// see README.md for usage tips
 package main
 
 import (
@@ -19,21 +12,15 @@ import (
 	"strings"
 )
 
-/*
- tbd            - prints all current tasks
- tbd #tagname   - prints all current tasks with #tagname
-*/
-
 var (
 	// Can be used to extract tags from a line of text
 	extract *regexp.Regexp
 )
 
 func init() {
-	// (#|@)          - capture the tag's type
-	// ([^\\s]+?)     - capture the tag's value
-	// (?:\\.|\\s|$)  - complete the match, non-capturing
-	extract = regexp.MustCompile("(#|@)([^\\s]+?)(?:[,\\.\\s]|$)")
+	// (#)([^\\s]+?)   - capture the tag's type and value
+	// (?:\\.|\\s|$)   - complete the match, non-capturing
+	extract = regexp.MustCompile("(#)([^\\s]+?)(?:[,\\.\\s]|$)")
 }
 
 func main() {
@@ -62,8 +49,14 @@ func main() {
 	}()
 
 	// Parse command line elements and register handlers
-	if len(os.Args) == 1 {
+	if argc := len(os.Args); argc == 1 {
 		handlers = append(handlers, cutoff())
+	} else {
+		var tags = make([]string, argc-1)
+		for _, arg := range os.Args[1:] {
+			tags = append(tags, arg)
+		}
+		handlers = append(handlers, matching(tags))
 	}
 
 	// Register the final handler
@@ -77,7 +70,7 @@ func main() {
 		return
 	}
 
-	// Input close handler
+	// Make sure to close the input
 	defer func() {
 		err := input.Close()
 		if err != nil {
@@ -109,17 +102,15 @@ func main() {
 // The tags struct contains hash (#) and at (@) tags
 type tags struct {
 	hash []string
-	at   []string
 }
 
 // Parse the input for any tags
 func parse(line string) (result tags) {
 	for _, submatch := range extract.FindAllStringSubmatch(line, -1) {
 		switch submatch[1] {
+		// Other tag types can be added as well
 		case "#":
 			result.hash = append(result.hash, submatch[2])
-		case "@":
-			result.at = append(result.at, submatch[2])
 		}
 	}
 	return
@@ -210,11 +201,16 @@ func cutoff() handler {
 	}
 }
 
-// Returns a matching handler closure that filters tasks per tag
-func matching(tag string) handler {
+// Returns a matching handler closure that filters tasks not matching atleast one tag
+func matching(tags []string) handler {
+	var allowed = make(map[string]bool)
+	for _, tag := range tags {
+		allowed[tag] = true
+	}
+
 	return func(t *task) action {
-		for _, v := range t.hash {
-			if v == tag {
+		for _, tag := range t.hash {
+			if allowed[tag] {
 				return action{}
 			}
 		}

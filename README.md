@@ -9,6 +9,6 @@
 #### Invoke tbd
 
 * without any arguments to list all non-blocked tasks
-* with #tagged #arguments to list all matching tasks
+* with tag names to list all partially matching tasks
 
 Live, learn and take it easy :)
