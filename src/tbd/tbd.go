@@ -1,3 +1,12 @@
+// tbd, a #tag-based dependencies filter useful for low ceremony task management
+//
+// * Keep your tasks in a text file named 'tbdata', one task per line
+// * Tag your tasks with #some #tags to indicate dependencies
+//
+// * Invoke tbd without any arguments to list all non-blocked tasks
+// * Invoke tbd with #tag #arguments to list all tasksk with those tags.
+//
+// * Live, learn and take it easy :)
 package main
 
 import (
@@ -7,6 +16,7 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strings"
 )
 
 /*
@@ -20,11 +30,10 @@ var (
 )
 
 func init() {
-	// (?:^|\\s)      - begin from the start or a white space, non-capturing
 	// (#|@)          - capture the tag's type
 	// ([^\\s]+?)     - capture the tag's value
-	// (?:\\.|\\s|$)  - complete with a dot, a white space or the end, non-capturing
-	extract = regexp.MustCompile("(?:^|\\s)(#|@)([^\\s]+?)(?:\\.|\\s|$)")
+	// (?:\\.|\\s|$)  - complete the match, non-capturing
+	extract = regexp.MustCompile("(#|@)([^\\s]+?)(?:[,\\.\\s]|$)")
 }
 
 func main() {
@@ -80,7 +89,11 @@ func main() {
 	reader := bufio.NewReader(input)
 	for {
 		line, err := reader.ReadString('\n')
-		handle(handlers, &task{tags: parse(line), value: line})
+
+		line = strings.TrimSpace(line)
+		if len(line) > 0 {
+			handle(handlers, &task{tags: parse(line), value: line})
+		}
 
 		// Process errors after handling as ReadString can return both data and error f
 		if err != nil {
