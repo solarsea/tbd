@@ -31,7 +31,7 @@ func main() {
 
 	var (
 		exitCode int
-		handlers []handler = make([]handler, 1)
+		handlers []handler = []handler{counting()}
 	)
 
 	// Exit handler
@@ -61,7 +61,7 @@ func main() {
 	reader := bufio.NewReader(input)
 	for {
 		line, err := reader.ReadString('\n')
-		handle(handlers, task{parse(line), line})
+		handle(handlers, &task{tags: parse(line), value: line})
 
 		// Process errors after handling as ReadString can return both data and error f
 		if err != nil {
@@ -99,6 +99,7 @@ func parse(line string) tags {
 // The task struct contains a task description and its tags
 type task struct {
 	tags
+	nth   int
 	value string
 }
 
@@ -109,14 +110,45 @@ type action struct {
 }
 
 // An alias interface for all task handler functions
-type handler func(task) action
+type handler func(*task) action
 
 // Execute handlers against a task
-func handle(handlers []handler, t task) {
+func handle(handlers []handler, t *task) {
 	for _, h := range handlers {
 		act := h(t)
 		if act.stop {
 			return
 		}
 	}
+}
+
+// Returns a counting handler closure that sets the task's nth field
+func counting() handler {
+	var at int = 0
+	return func(t *task) action {
+		t.nth = at
+		at++
+		return action{}
+	}
+}
+
+// The context struct allows for state-sharing between different handlers
+type context struct {
+	// Store dependency chains per tag type
+	chains map[string][]*task
+}
+
+// Returns a new context struct
+func newContext() *context {
+	var result context
+	result.chains = make(map[string][]*task)
+	return &result
+}
+
+// A grouping handler that stores tasks in tag chains
+func (c *context) grouping(t *task) action {
+	for _, tag := range t.hash {
+		c.chains[tag] = append(c.chains[tag], t)
+	}
+	return action{} // default, no action
 }
