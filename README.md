@@ -1,6 +1,8 @@
 ## tbd
 ### a #tag-based dependency tool for low ceremony task tracking
 
+#### [presentation](http://go-talks.appspot.com/github.com/gophergala/tbd/tbd.slide#1)
+
 #### In order to use:
 
 * Keep your tasks in a text file named 'tbdata', one task per line
