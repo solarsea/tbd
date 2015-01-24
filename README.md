@@ -1,5 +1,5 @@
 ## tbd
-### a #tag-based dependencies filter for low ceremony task management
+### a #tag-based dependency tool for low ceremony task tracking
 
 #### In order to use:
 
