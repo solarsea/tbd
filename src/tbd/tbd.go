@@ -81,9 +81,7 @@ type tags struct {
 }
 
 // Parse the input for any tags
-func parse(line string) tags {
-	var result tags
-
+func parse(line string) (result tags) {
 	for _, submatch := range extract.FindAllStringSubmatch(line, -1) {
 		switch submatch[1] {
 		case "#":
@@ -92,15 +90,30 @@ func parse(line string) tags {
 			result.at = append(result.at, submatch[2])
 		}
 	}
-
-	return result
+	return
 }
 
 // The task struct contains a task description and its tags
 type task struct {
 	tags
-	nth   int
-	value string
+	nth     int
+	value   string
+	depends tasks
+}
+
+// Alias for a slice of task pointer
+type tasks []*task
+
+func (t tasks) Len() int {
+	return len(t)
+}
+
+func (t tasks) Less(i, j int) bool {
+	return t[i].nth < t[j].nth
+}
+
+func (t tasks) Swap(i, j int) {
+	t[i], t[j] = t[j], t[i]
 }
 
 // The action struct contains flags that determine what to do with a task
@@ -132,23 +145,36 @@ func counting() handler {
 	}
 }
 
-// The context struct allows for state-sharing between different handlers
-type context struct {
+// Returns a grouping handler closure that stores tasks in tag chains
+func grouping() handler {
 	// Store dependency chains per tag type
-	chains map[string][]*task
-}
+	var chains = make(map[string]tasks)
 
-// Returns a new context struct
-func newContext() *context {
-	var result context
-	result.chains = make(map[string][]*task)
-	return &result
-}
+	return func(t *task) action {
+		for _, tag := range t.hash {
+			// The previous tasks for current tag
+			prev := chains[tag]
 
-// A grouping handler that stores tasks in tag chains
-func (c *context) grouping(t *task) action {
-	for _, tag := range t.hash {
-		c.chains[tag] = append(c.chains[tag], t)
+			// Point the current task to the last one with a matching tag, if any
+			if l := len(prev); l > 0 {
+				t.depends = append(t.depends, prev[l-1])
+			}
+
+			// Add the current task for the current tag
+			chains[tag] = append(chains[tag], t)
+		}
+		return action{} // default, no action
 	}
-	return action{} // default, no action
+}
+
+// Returns a matching handler closure that stores tasks in tag chains
+func matching(tag string) handler {
+	return func(t *task) action {
+		for _, v := range t.hash {
+			if v == tag {
+				return action{}
+			}
+		}
+		return action{stop: true}
+	}
 }
