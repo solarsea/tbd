@@ -4,9 +4,9 @@
 // * Tag your tasks with #some #tags to indicate dependencies
 //
 // * Invoke tbd without any arguments to list all non-blocked tasks
-// * Invoke tbd with #tag #arguments to list all tasksk with those tags.
+// * Invoke tbd with #tagged #arguments to list all matching tasks
 //
-// * Live, learn and take it easy :)
+// Live, learn and take it easy :)
 package main
 
 import (
