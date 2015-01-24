@@ -14,3 +14,5 @@
 * with tag names to list all partially matching tasks
 
 Live, learn and take it easy :)
+
+[![Build Status](https://drone.io/github.com/gophergala/tbd/status.png)](https://drone.io/github.com/gophergala/tbd/latest)
