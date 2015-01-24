@@ -4,6 +4,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -104,6 +105,17 @@ type tags struct {
 	hash []string
 }
 
+// as per fmt.Stringer
+func (t tags) String() string {
+	var output bytes.Buffer
+	for _, tag := range t.hash {
+		output.WriteByte('[')
+		output.WriteString(tag)
+		output.WriteByte(']')
+	}
+	return output.String()
+}
+
 // Parse the input for any tags
 func parse(line string) (result tags) {
 	for _, submatch := range extract.FindAllStringSubmatch(line, -1) {
@@ -122,6 +134,11 @@ type task struct {
 	nth     int
 	value   string
 	depends tasks
+}
+
+// as per fmt.Stringer
+func (t *task) String() string {
+	return fmt.Sprintf("%d) %s %s", t.nth, t.tags, t.value)
 }
 
 // Alias for a slice of task pointer
@@ -163,7 +180,7 @@ func handle(handlers []handler, t *task) {
 
 // Returns a counting handler closure that sets the tasks' nth field
 func counting() handler {
-	var at int = 0
+	var at int = 1
 	return func(t *task) action {
 		t.nth = at
 		at++
