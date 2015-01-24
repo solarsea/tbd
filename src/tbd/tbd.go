@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"regexp"
+	"sort"
 )
 
 /*
@@ -38,7 +39,26 @@ func main() {
 		os.Exit(exitCode)
 	}()
 
+	// Create the final handler and stage the output
+	collect, output := collecting()
+	defer func() {
+		seq := make(tasks, 0, len(output))
+		for k, _ := range output {
+			seq = append(seq, k)
+		}
+		sort.Stable(seq)
+		for _, v := range seq {
+			fmt.Println(v)
+		}
+	}()
+
 	// Parse command line elements and register handlers
+	if len(os.Args) == 1 {
+		handlers = append(handlers, cutoff())
+	}
+
+	// Register the final handler
+	handlers = append(handlers, collect)
 
 	// Open default input
 	input, err := os.Open("tbdata")
@@ -159,6 +179,21 @@ func tracing() handler {
 			last[tag] = t
 		}
 		return action{} // default, no action
+	}
+}
+
+// Returns handler closure that rejects tasks with already-seen tags
+func cutoff() handler {
+	var seen = make(map[string]bool)
+	return func(t *task) (result action) {
+		for _, tag := range t.hash {
+			if seen[tag] {
+				result.stop = true
+			} else {
+				seen[tag] = true
+			}
+		}
+		return
 	}
 }
 
