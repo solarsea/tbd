@@ -17,10 +17,10 @@ A common acronym for
 - To be done
 - To be d…
 
-An application name
+An application name that
 
 - stands for #tag-based dependency
-- not a common command on most systems
+- is not a common command on most systems
 
 * Task tracking
 
@@ -36,22 +36,23 @@ An application name
 
 tbd uses
 
-- the order of its input
-- and user-defined #tags to #discover dependencies
+- forced ranking of tasks by their line number
+- user-defined #tags to #discover dependencies
 
-* Low ceremony
+* Low ceremony software
 
-- Coined by D. Richard Hipp of SQLite and Fossil fame
-- A way to do tools for power users with better user experience
-- * I dont want to learn a new language just to use task warrior *
+- requires little to none configuration
+- ..providing sane default behavior
 
+- does not enforce a strict usage model
+- ..enabling uses beyond initial intent
 
 tbd tries to follow suit by
 
 - Using plain text for input and output
 - Functioning as a one-way filter
-- Off-loading editing to your text editor :)
-- Keeping the code small due to the above
+- Off-loading editing to your text editor
+- Keeping the code small and structured
 
 * Usage
 
