@@ -36,7 +36,7 @@ An application name that
 
 tbd uses
 
-- forced ranking of tasks by their line number
+- implicit ordering of tasks by their position
 - user-defined #tags to #discover dependencies
 
 * Low ceremony software
