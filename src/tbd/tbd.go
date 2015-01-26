@@ -237,7 +237,7 @@ func matching(tags []string) handler {
 
 // Returns a handler that stores every seen task and an ancillary function to retrieve those
 func collecting() (handler, func() tasks) {
-	var seen = make(map[*task]struct{})
+	var seen = make(map[*task]bool)
 	return func(t *task) action {
 			depth := tasks{t}
 			for i := 0; i < len(depth); i++ {
