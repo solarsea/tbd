@@ -1,5 +1,4 @@
 // tbd, a #tag-based dependency tool for low ceremony task tracking
-// see README.md for usage tips
 package main
 
 import (
@@ -31,54 +30,38 @@ func main() {
 		handlers []handler = []handler{counting(), tracing()}
 	)
 
-	// Exit handler
-	defer func() {
-		os.Exit(exitCode)
-	}()
-
-	// Create the final handler and stage the output
-	collect, output := collecting()
-	defer func() {
-		for _, v := range output() {
-			fmt.Println(v)
-		}
-	}()
-
 	// Parse command line elements and register handlers
-	if argc := len(os.Args); argc == 1 {
+	if len(os.Args) == 1 {
 		handlers = append(handlers, cutoff())
 	} else {
-		var tags = make([]string, argc-1)
-		for _, arg := range os.Args[1:] {
-			tags = append(tags, arg)
-		}
-		handlers = append(handlers, matching(tags))
+		handlers = append(handlers, matching(os.Args[1:]))
 	}
 
-	// Register the final handler
+	collect, output := collecting()
 	handlers = append(handlers, collect)
 
 	// Open default input
 	input, err := os.Open("tbdata")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Unable to open tbdata.", err.Error())
-		exitCode = 1
-		return
+		os.Exit(1)
 	}
 
-	// Make sure to close the input
-	defer func() {
-		err := input.Close()
-		if err != nil {
-			fmt.Fprintln(os.Stderr, "Unable to close input.", err.Error())
-			exitCode = 1
-		}
-	}()
-
 	exitCode = process(input, handlers)
+
+	for _, v := range output() {
+		fmt.Println(v)
+	}
+
+	if err := input.Close(); err != nil {
+		fmt.Fprintln(os.Stderr, "Unable to close input.", err.Error())
+		exitCode = 1
+	}
+
+	os.Exit(exitCode)
 }
 
-// Process the input through the provided handlers
+// Processes input through the provided handlers
 func process(input io.Reader, handlers []handler) int {
 	reader := bufio.NewReader(input)
 	for {
@@ -100,7 +83,7 @@ func process(input io.Reader, handlers []handler) int {
 	}
 }
 
-// The tags struct contains hash (#) and at (@) tags
+// The tags struct contains hash (#) tags
 type tags struct {
 	hash []string
 }
@@ -237,11 +220,14 @@ func matching(tags []string) handler {
 
 // Returns a handler that stores every seen task and an ancillary function to retrieve those
 func collecting() (handler, func() tasks) {
-	var seen = make(map[*task]struct{})
+	var seen = make(map[*task]bool)
 	return func(t *task) action {
-			seen[t] = struct{}{}
-			for _, dep := range t.depends {
-				seen[dep] = struct{}{}
+			depth := tasks{t}
+			for i := 0; i < len(depth); i++ {
+				if !seen[depth[i]] {
+					seen[depth[i]] = true
+					depth = append(depth, depth[i].depends...)
+				}
 			}
 			return action{}
 		}, func() tasks {
