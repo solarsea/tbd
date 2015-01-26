@@ -1,7 +1,7 @@
 ## tbd
 ### a #tag-based dependency tool for low ceremony task tracking
 
-#### [presentation](http://go-talks.appspot.com/github.com/gophergala/tbd/tbd.slide#1)
+#### [presentation](http://go-talks.appspot.com/github.com/solarsea/tbd/tbd.slide#1)
 
 #### In order to use:
 
@@ -15,4 +15,3 @@
 
 Live, learn and take it easy :)
 
-[![Build Status](https://drone.io/github.com/gophergala/tbd/status.png)](https://drone.io/github.com/gophergala/tbd/latest)
