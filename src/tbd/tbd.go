@@ -239,9 +239,12 @@ func matching(tags []string) handler {
 func collecting() (handler, func() tasks) {
 	var seen = make(map[*task]struct{})
 	return func(t *task) action {
-			seen[t] = struct{}{}
-			for _, dep := range t.depends {
-				seen[dep] = struct{}{}
+			depth := tasks{t}
+			for i := 0; i < len(depth); i++ {
+				if !seen[depth[i]] {
+					seen[depth[i]] = true
+					depth = append(depth, depth[i].depends...)
+				}
 			}
 			return action{}
 		}, func() tasks {
