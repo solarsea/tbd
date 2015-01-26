@@ -3,6 +3,8 @@
 
 #### [presentation](http://go-talks.appspot.com/github.com/gophergala/tbd/tbd.slide#1)
 
+#### [further development will only happen at this repo](https://github.com/solarsea/tbd)
+
 #### In order to use:
 
 * Keep your tasks in a text file named 'tbdata', one task per line
