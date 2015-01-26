@@ -240,6 +240,9 @@ func collecting() (handler, func() tasks) {
 	var seen = make(map[*task]struct{})
 	return func(t *task) action {
 			seen[t] = struct{}{}
+			for _, dep := range t.depends {
+				seen[dep] = struct{}{}
+			}
 			return action{}
 		}, func() tasks {
 			seq := make(tasks, 0, len(seen))
