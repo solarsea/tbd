@@ -1,7 +1,7 @@
 ## tbd
 ### a #tag-based dependency tool for low ceremony task tracking
 
-### [Go here for the latest version](https://0dev.org/cgi-bin/repositories/the-shed) - as good as github is, I'm not dealing with that crap of a version control grotesque unless I'm getting paid for :)
+#### [Go here for the latest version](https://0dev.org/cgi-bin/repositories/the-shed) 
 
 #### [presentation](http://go-talks.appspot.com/github.com/solarsea/tbd/tbd.slide#1)
 
