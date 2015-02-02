@@ -1,4 +1,4 @@
-// tbd, a #tag-based dependency tool for low ceremony task tracking
+// tbd, a #tag-based dependency tool for task tracking
 package main
 
 import (
@@ -218,7 +218,8 @@ func matching(tags []string) handler {
 	}
 }
 
-// Returns a handler that stores every seen task and an ancillary function to retrieve those
+// Returns a handler that stores every seen task and its dependencies
+//    along with an ancillary function to retrieve those in a sorted order
 func collecting() (handler, func() tasks) {
 	var seen = make(map[*task]bool)
 	return func(t *task) action {
