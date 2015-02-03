@@ -6,7 +6,7 @@ Tags: foo, bar, baz
 Stanislav Paskalev
 
 kshorg@gmail.com
-https://github.com/gophergala/tbd
+https://github.com/solarsea/tbd
 
 * tbd
 
@@ -37,7 +37,7 @@ An application name that
 tbd uses
 
 - implicit ordering of tasks by their position
-- user-defined #tags to #discover dependencies
+- user-defined #tags to discover #dependencies
 
 * Low ceremony software
 

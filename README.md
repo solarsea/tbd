@@ -1,20 +1,32 @@
 ## tbd
-### a #tag-based dependency tool for low ceremony task tracking
+### a #tag-based dependency tool for task tracking
 
-#### [presentation](http://go-talks.appspot.com/github.com/gophergala/tbd/tbd.slide#1)
+#### [presentation](http://go-talks.appspot.com/github.com/solarsea/tbd/tbd.slide#1)
+
+#### [further development will only happen at this repo](https://github.com/solarsea/tbd)
 
 #### [further development will only happen at this repo](https://github.com/solarsea/tbd)
 
 #### In order to use:
 
 * Keep your tasks in a text file named 'tbdata', one task per line
-* Tag your tasks with #some #tags to indicate dependencies
+* Tag #some words in your tasks to #mark dependencies
+* A task with a tag set T depends on any previous task with a tag set P when (T ∩ P) ≠ ∅
 
 #### Invoke tbd
 
-* without any arguments to list all non-blocked tasks
-* with tag names to list all partially matching tasks
+* without arguments to list all independent tasks
+* with tag names to list all tasks that match at least one tag along with their dependencies
 
-Live, learn and take it easy :)
+##### License
 
-[![Build Status](https://drone.io/github.com/gophergala/tbd/status.png)](https://drone.io/github.com/gophergala/tbd/latest)
+Copyright ©  2015 Stanislav Paskalev
+
+Usage of the works is permitted provided that this instrument is retained with the works, so that any entity that uses the works is notified of this instrument.
+
+DISCLAIMER: THE WORKS ARE WITHOUT WARRANTY.
+
+##### Misc
+
+* [![Build Status](https://drone.io/github.com/solarsea/tbd/status.png)](https://drone.io/github.com/solarsea/tbd/latest)
+* Live, learn and take it easy :)
