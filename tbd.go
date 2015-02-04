@@ -69,7 +69,7 @@ func process(input io.Reader, handlers []handler) int {
 
 		line = strings.TrimSpace(line)
 		if len(line) > 0 {
-			handle(handlers, &task{tags: parse(line), value: line})
+			handle(handlers, &task{tags: parse(line), value: line, depends: make(tasks, 0, 8)})
 		}
 
 		// Process errors after handling as ReadString can return both data and error f
