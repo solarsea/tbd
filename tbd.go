@@ -27,7 +27,7 @@ func main() {
 
 	var (
 		exitCode int
-		handlers []handler = []handler{counting(), tracing()}
+		handlers = handlerChain{counting(), tracing()}
 	)
 
 	// Parse command line elements and register handlers
@@ -62,14 +62,14 @@ func main() {
 }
 
 // Processes input through the provided handlers
-func process(input io.Reader, handlers []handler) int {
+func process(input io.Reader, handlers handlerChain) int {
 	reader := bufio.NewReader(input)
 	for {
 		line, err := reader.ReadString('\n')
 
 		line = strings.TrimSpace(line)
 		if len(line) > 0 {
-			handle(handlers, &task{tags: parse(line), value: line, depends: make(tasks, 0, 8)})
+			handlers.do(&task{tags: parse(line), value: line, depends: make(tasks, 0, 8)})
 		}
 
 		// Process errors after handling as ReadString can return both data and error f
@@ -151,10 +151,13 @@ type action struct {
 // An alias interface for all task handler functions
 type handler func(*task) action
 
+// A slice of handlers
+type handlerChain []handler
+
 // Execute handlers against a task
-func handle(handlers []handler, t *task) {
-	for _, h := range handlers {
-		act := h(t)
+func (handlers handlerChain) do(t *task) {
+	for _, current := range handlers {
+		act := current(t)
 		if act.stop {
 			return
 		}
