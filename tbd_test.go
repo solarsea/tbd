@@ -17,7 +17,7 @@ func TestNoArgs(t *testing.T) {
 	// so we have something to easily compare against the final stage's output
 	collectTest, outputTest := collecting()
 	collectFinal, outputFinal := collecting()
-	handlers := []handler{collectTest, counting(), tracing(), cutoff(), collectFinal}
+	handlers := []handler{collectTest, counting(), dependencies(), cutoff(), collectFinal}
 
 	// ... and execute them against the sample tbdata
 	reader := strings.NewReader(tbdata)
@@ -46,7 +46,7 @@ func TestArgs(t *testing.T) {
 	// so we have something to easily compare against the final stage's output
 	collectTest, outputTest := collecting()
 	collectFinal, outputFinal := collecting()
-	handlers := []handler{collectTest, counting(), tracing(), matching([]string{"main"}), collectFinal}
+	handlers := []handler{collectTest, counting(), dependencies(), matching([]string{"main"}), collectFinal}
 
 	// ... and execute them against the sample tbdata
 	reader := strings.NewReader(tbdata)
