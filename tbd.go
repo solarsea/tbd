@@ -3,7 +3,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -20,14 +19,14 @@ var (
 func init() {
 	// (#)([^\\s]+?)   - capture the tag's type and value
 	// (?:\\.|\\s|$)   - complete the match, non-capturing
-	extract = regexp.MustCompile("(#)([^\\s]+?)(?:[,\\.\\s]|$)")
+	extract = regexp.MustCompile("(##|#)([^\\s]+?)(?:[,\\.\\s]|$)")
 }
 
 func main() {
 
 	var (
 		exitCode int
-		handlers = handlerChain{counting(), tracing()}
+		handlers = handlerChain{counting(), dependencies()}
 	)
 
 	// Parse command line elements and register handlers
@@ -85,27 +84,33 @@ func process(input io.Reader, handlers handlerChain) int {
 
 // The tags struct contains hash (#) tags
 type tags struct {
-	hash []string
-}
-
-// as per fmt.Stringer
-func (t tags) String() string {
-	var output bytes.Buffer
-	for _, tag := range t.hash {
-		output.WriteByte('[')
-		output.WriteString(tag)
-		output.WriteByte(']')
-	}
-	return output.String()
+	provided  map[string]struct{}
+	dependent map[string]struct{}
 }
 
 // Parse the input for any tags
 func parse(line string) (result tags) {
+	result.provided = make(map[string]struct{})
+	result.dependent = make(map[string]struct{})
+
+	//       | provides | depends
+	// ------+----------+---------
+	//     # | tag,#tag |   tag
+	//    ## |   tag    |  #tag
+
 	for _, submatch := range extract.FindAllStringSubmatch(line, -1) {
+		tag := submatch[2]
 		switch submatch[1] {
 		// Other tag types can be added as well
 		case "#":
-			result.hash = append(result.hash, submatch[2])
+			result.provided[tag] = struct{}{}
+			result.provided["#"+tag] = struct{}{}
+
+			result.dependent[tag] = struct{}{}
+		case "##":
+			result.provided[tag] = struct{}{}
+
+			result.dependent["#"+tag] = struct{}{}
 		}
 	}
 	return
@@ -121,7 +126,7 @@ type task struct {
 
 // as per fmt.Stringer
 func (t *task) String() string {
-	return fmt.Sprintf("%d) %s %s", t.nth, t.tags, t.value)
+	return fmt.Sprintf("%d) %s", t.nth, t.value)
 }
 
 // Alias for a slice of task pointer
@@ -164,7 +169,7 @@ func (handlers handlerChain) do(t *task) {
 	}
 }
 
-// Returns a counting handler closure that sets the tasks' nth field
+// Returns a handler that sets the tasks' nth field
 func counting() handler {
 	var at int = 1
 	return func(t *task) action {
@@ -174,37 +179,35 @@ func counting() handler {
 	}
 }
 
-// Returns a tracing handler closure that sets the tasks' depends field
-func tracing() handler {
-	// Store the last task per tag type
+// Returns a handler that sets the tasks' depends field
+func dependencies() handler {
+	// Store the last task per tag
 	var last = make(map[string]*task)
+
 	return func(t *task) action {
-		for _, tag := range t.hash {
-			if prev, ok := last[tag]; ok {
-				t.depends = append(t.depends, prev)
+		for tag, _ := range t.dependent {
+			if previousTask, ok := last[tag]; ok {
+				t.depends = append(t.depends, previousTask)
 			}
+		}
+		for tag, _ := range t.provided {
 			last[tag] = t
 		}
 		return action{} // default, no action
 	}
 }
 
-// Returns handler closure that rejects tasks with already-seen tags
+// Returns a handler that rejects tasks with dependencies
 func cutoff() handler {
-	var seen = make(map[string]bool)
-	return func(t *task) (result action) {
-		for _, tag := range t.hash {
-			if seen[tag] {
-				result.stop = true
-			} else {
-				seen[tag] = true
-			}
+	return func(t *task) action {
+		if len(t.depends) > 0 {
+			return action{stop: true}
 		}
-		return
+		return action{}
 	}
 }
 
-// Returns a matching handler closure that filters tasks not matching atleast one tag
+// Returns a handler  that filters tasks not matching atleast one tag
 func matching(tags []string) handler {
 	var allowed = make(map[string]bool)
 	for _, tag := range tags {
@@ -212,7 +215,7 @@ func matching(tags []string) handler {
 	}
 
 	return func(t *task) action {
-		for _, tag := range t.hash {
+		for tag, _ := range t.provided {
 			if allowed[tag] {
 				return action{}
 			}
@@ -225,21 +228,26 @@ func matching(tags []string) handler {
 //    along with an ancillary function to retrieve those in a sorted order
 func collecting() (handler, func() tasks) {
 	var seen = make(map[*task]bool)
-	return func(t *task) action {
-			depth := tasks{t}
-			for i := 0; i < len(depth); i++ {
-				if !seen[depth[i]] {
-					seen[depth[i]] = true
-					depth = append(depth, depth[i].depends...)
-				}
+
+	collector := func(t *task) action {
+		depth := tasks{t}
+		for i := 0; i < len(depth); i++ {
+			if !seen[depth[i]] {
+				seen[depth[i]] = true
+				depth = append(depth, depth[i].depends...)
 			}
-			return action{}
-		}, func() tasks {
-			seq := make(tasks, 0, len(seen))
-			for k, _ := range seen {
-				seq = append(seq, k)
-			}
-			sort.Stable(seq)
-			return seq
 		}
+		return action{}
+	}
+
+	retriever := func() tasks {
+		seq := make(tasks, 0, len(seen))
+		for k, _ := range seen {
+			seq = append(seq, k)
+		}
+		sort.Stable(seq)
+		return seq
+	}
+
+	return collector, retriever
 }
