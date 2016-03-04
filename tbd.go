@@ -95,8 +95,8 @@ func parse(line string) (result tags) {
 
 	//       | provides | depends
 	// ------+----------+---------
-	//     # | tag,#tag |   tag
-	//    ## |   tag    |  #tag
+	//     # |   #, ##  |  #
+	//    ## |   #      |  ##
 
 	for _, submatch := range extract.FindAllStringSubmatch(line, -1) {
 		tag := submatch[2]
@@ -118,13 +118,13 @@ func parse(line string) (result tags) {
 
 // The task struct contains a task description and its tags
 type task struct {
-	tags
+	tags    tags
 	nth     int
 	value   string
 	depends tasks
 }
 
-// as per fmt.Stringer
+// per fmt.Stringer
 func (t *task) String() string {
 	return fmt.Sprintf("%d) %s", t.nth, t.value)
 }
@@ -132,17 +132,17 @@ func (t *task) String() string {
 // Alias for a slice of task pointer
 type tasks []*task
 
-// as per sort.Interface
+// per sort.Interface
 func (t tasks) Len() int {
 	return len(t)
 }
 
-// as per sort.Interface
+// per sort.Interface
 func (t tasks) Less(i, j int) bool {
 	return t[i].nth < t[j].nth
 }
 
-// as per sort.Interface
+// per sort.Interface
 func (t tasks) Swap(i, j int) {
 	t[i], t[j] = t[j], t[i]
 }
@@ -185,12 +185,12 @@ func dependencies() handler {
 	var last = make(map[string]*task)
 
 	return func(t *task) action {
-		for tag, _ := range t.dependent {
+		for tag, _ := range t.tags.dependent {
 			if previousTask, ok := last[tag]; ok {
 				t.depends = append(t.depends, previousTask)
 			}
 		}
-		for tag, _ := range t.provided {
+		for tag, _ := range t.tags.provided {
 			last[tag] = t
 		}
 		return action{} // default, no action
@@ -215,7 +215,7 @@ func matching(tags []string) handler {
 	}
 
 	return func(t *task) action {
-		for tag, _ := range t.provided {
+		for tag, _ := range t.tags.provided {
 			if allowed[tag] {
 				return action{}
 			}
